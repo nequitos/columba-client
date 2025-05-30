@@ -1,6 +1,4 @@
 
-from src.init import session_factory
-
 from flet import (
     View,
     Container,
@@ -16,15 +14,14 @@ from flet import (
     ControlEvent
 )
 from flet import alignment, MainAxisAlignment
-from flet.auth.authorization import OAuth2Token
 
-from src.static.schemes import auth as auth_schemes
 from src.static.enums import (
     view as view_enums,
-    button as button_enums,
-    uri as uri_enums
+    button as button_enums
 )
-
+from src.init import oath2_session
+from src.client.auth import OAuth2Session
+from src.client.schemes.auth import OAuth2
 
 
 class SignInView(View):
@@ -92,21 +89,12 @@ class SignInView(View):
         ]
 
     async def on_sign_in(self, event: ControlEvent):
-        async with session_factory() as session:
-            response = await session.post(
-                url=uri_enums.Post.SIGN_IN_URI,
-                content=auth_schemes.OAuth2(
-                    username=self.login_entry.value,
-                    password=self.password_entry.value,
-                    scopes=["me", "items"]
-                ).model_dump_json(),
-                headers={
-                    "Content-Type": "application/json",
-                    "WWW-Authenticate": "Bearer"
-                }
-            )
-
-            print(response)
+        oath2_session.set_credentials(
+            username=self.login_entry.value,
+            password=self.password_entry.value
+        )
+        if await oath2_session.authenticate_session():
+            self.page.go(view_enums.Route.HOME)
 
     async def on_sign_up(self, event: ControlEvent):
         self.page.go(view_enums.Route.SIGN_UP)

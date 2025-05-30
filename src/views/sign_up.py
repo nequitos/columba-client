@@ -1,8 +1,4 @@
 
-from src.init import (
-    session_factory
-)
-
 from flet import (
     View,
     Container,
@@ -24,14 +20,11 @@ from flet import (
 
 from src.static.enums import (
     button as button_enums,
-    entry as entry_enums,
     label as label_enums,
-    view as view_enums,
-    uri as uri_enums
+    view as view_enums
 )
-from src.static.schemes import (
-    auth as auth_schemes
-)
+from src.client.schemes.auth import CreateAccount
+from src.init import session, URI
 
 
 class SignUpView(View):
@@ -116,15 +109,17 @@ class SignUpView(View):
         self.page.go(view_enums.Route.SIGN_IN)
 
     async def on_sing_up(self, event: ControlEvent) -> None:
-        async with session_factory() as session:
-            response = await session.post(
-                url=uri_enums.Post.SIGN_UP_URI,
-                content=auth_schemes.SignUp(
+        if (
+            self.password_entry.value == self.retype_password_entry.value and
+            self.first_name_entry is not None and
+            self.last_name_entry is not None
+        ):
+            await session.post(
+                URI.ACCOUNT_CREATE_URI.value,
+                CreateAccount(
                     first_name=self.first_name_entry.value,
                     last_name=self.last_name_entry.value,
-                    email=self.email_entry.value,
-                    password=self.password_entry.value
-                ).model_dump_json()
+                    password=self.password_entry.value,
+                    email=self.email_entry.value
+                ).model_dump()
             )
-
-            print(response)

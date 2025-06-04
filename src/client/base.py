@@ -6,8 +6,10 @@ from httpx import (
     AsyncClient,
     URL,
     HTTPStatusError,
-    RequestError
+    RequestError,
+    BasicAuth
 )
+from .auth import OAuth2
 
 
 type JsonDumpsType = dict[str, Any]
@@ -23,9 +25,11 @@ class BaseSession:
         scheme: Any,
         host: Any,
         port: Any,
+        auth: OAuth2
     ) -> None:
-        self.url = URL(scheme=scheme, host=host, port=port)
-        self._client = AsyncClient(base_url=self.url)
+        self._client = AsyncClient(
+            base_url=URL(scheme=scheme, host=host, port=port), auth=auth
+        )
         self.headers = self._client.headers
         self.cookies = self._client.cookies
 
@@ -42,7 +46,7 @@ class BaseSession:
         if not self._client.is_closed:
             await self._client.aclose()
 
-    async def get(self, path: str, params: JsonDumpsType) -> JsonLoadsType:
+    async def get(self, path: str, params: JsonDumpsType | None = None) -> JsonLoadsType:
         try:
             logger.debug(f"Send request with params: {params}")
             resp = await self._client.get(path, params=params)
@@ -67,3 +71,12 @@ class BaseSession:
             raise
         except RequestError as exc:
             raise
+
+    async def patch(self):
+        pass
+
+    async def delete(self):
+        pass
+
+    async def put(self):
+        pass

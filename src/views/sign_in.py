@@ -1,4 +1,6 @@
 
+from httpx import BasicAuth
+
 from flet import (
     View,
     Container,
@@ -19,9 +21,7 @@ from src.static.enums import (
     view as view_enums,
     button as button_enums
 )
-from src.init import oath2_session
-from src.client.auth import OAuth2Session
-from src.client.schemes.auth import OAuth2
+from src.init import session, oath2
 
 
 class SignInView(View):
@@ -89,11 +89,11 @@ class SignInView(View):
         ]
 
     async def on_sign_in(self, event: ControlEvent):
-        oath2_session.set_credentials(
+        oath2.set_credentials(
             username=self.login_entry.value,
             password=self.password_entry.value
         )
-        if await oath2_session.authenticate_session():
+        if await oath2.authorize_account():
             self.page.go(view_enums.Route.HOME)
 
     async def on_sign_up(self, event: ControlEvent):

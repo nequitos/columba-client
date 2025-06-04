@@ -8,6 +8,7 @@ from flet.app import (
     app_async
 )
 
+from src.init import session
 from src.views import *
 from src.static.enums.view import Route
 
@@ -16,7 +17,7 @@ async def main(page: Page):
     page.window.width = 900
     page.window.height = 600
 
-    def route_change(event: RouteChangeEvent):
+    async def route_change(event: RouteChangeEvent):
         page.views.clear()
         page.views.append(
             IndexView()
@@ -26,6 +27,11 @@ async def main(page: Page):
             page.views.append(SignInView())
         elif event.route == Route.SIGN_UP:
             page.views.append(SignUpView())
+        elif event.route == Route.HOME:
+            home_view = HomeView()
+            page.views.append(home_view)
+            await home_view.load_chats()
+            # home_view.chat_column.update()
 
         page.update()
 

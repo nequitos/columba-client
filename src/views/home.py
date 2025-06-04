@@ -19,7 +19,8 @@ from flet import (
     CircleAvatar,
     IconButton,
     Text,
-    TextButton
+    TextButton,
+    TextField
 
 )
 from flet import (
@@ -29,11 +30,15 @@ from flet import (
     Colors,
     NavigationRailLabelType,
     MainAxisAlignment,
-    alignment
+    alignment,
+    ScrollMode
 )
 
 from src.static.enums import view as view_enums
 from src.init import session
+
+
+from pprint import pprint
 
 
 # class DialogContainer(Container):
@@ -66,7 +71,10 @@ class HomeView(View):
             controls=[
                 self.anchor
             ],
-            width=200,
+            width=200
+        )
+        self.messages_column = Column(
+            # alignment=MainAxisAlignment.CENTER,
             expand=True
         )
 
@@ -126,7 +134,9 @@ class HomeView(View):
                     [
                         self.rail,
                         VerticalDivider(width=1),
-                        self.chat_column
+                        self.chat_column,
+                        VerticalDivider(width=1),
+                        self.messages_column
                     ]
                 ),
                 expand=True
@@ -135,19 +145,52 @@ class HomeView(View):
 
     async def load_chats(self):
         chats = await session.chats()
-        print(chats)
 
         for chat in chats:
-            print(chat["first_name"])
             self.chat_column.controls.append(
                 Container(
-                    TextButton(
-                        text=f"{chat["first_name"]} {chat["last_name"]}",
-                        # content=Container(CircleAvatar(), alignment=alignment.top_left),
-                        width=200,
-                    )
+                    ElevatedButton(
+                        content=Container(
+                            Row(
+                                [
+                                    CircleAvatar(), Text(f"{chat["first_name"]} {chat["last_name"]}")
+                                ],
+                                alignment=MainAxisAlignment.START
+                            ),
+                            alignment=alignment.top_left
+                        ),
+                        data=chat["uuid"],
+                        on_click=self.__on_chat,
+                        expand=True
+                    ),
+                    width=200
                 )
             )
+
+    async def __on_chat(self, event: ControlEvent):
+        me = await session.me()
+        chat_data = await session.chat_messages(event.control.data)
+        messages = chat_data["messages"]
+
+        for message in messages:
+            message_row = Row(
+                [
+                    Text(value=message["text"])
+                ],
+                expand=True
+            )
+            if me["uuid"] == message["account_uuid"]:
+                message_row.alignment = MainAxisAlignment.END
+            else:
+                message_row.alignment = MainAxisAlignment.START
+
+            self.messages_column.controls.append(
+                message_row
+            )
+
+        message_entry = TextField()
+        self.messages_column.controls.append(TextField())
+        self.update()
 
     async def on_drawer_change(self, event: ControlEvent):
         match event.data:
@@ -166,6 +209,7 @@ class HomeView(View):
 
     async def on_manage(self, event: ControlEvent):
         self.page.open(self.drawer)
+
 
 
 

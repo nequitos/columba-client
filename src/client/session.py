@@ -28,6 +28,12 @@ class Session:
         )
         return response
 
+    async def chat_messages(self, chat_uuid: UUID):
+        response = await self._session.get(
+            "/chat", params={"uuid": chat_uuid}
+        )
+        return response
+
 
     async def me(self) -> dict[str, Any]:
         return await self._session.get("/account/me")

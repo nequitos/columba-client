@@ -10,11 +10,29 @@ from flet import (
 
 
 from src.enums import view as view_enums
-from src.controllers.drawer import Drawer
-from src.controllers.rail import Rail
+# from src.controllers.drawer import Drawer
+# from src.controllers.rail import Rail
 
+from session import BaseSession, OAuth2
+from src.views.home import HomeView
 from views import *
 from models import *
+from controllers import *
+
+
+oauth = OAuth2("http", "localhost", 8000, "/oauth/v2/token")
+session = BaseSession("http", "localhost", 8000, oauth)
+
+
+# --- Models initialize --- #
+sign_in_model = SignInModel()
+sign_up_model = SignUpModel()
+home_model = HomeModel()
+
+# --- Controllers initialize --- #
+sign_in_controller = SingInController(model=sign_in_model, oauth=oauth)
+sign_up_controller = SignUpController(model=sign_up_model, session=session, oauth=oauth)
+home_controller = HomeController(model=home_model, session=session)
 
 
 class App:
@@ -23,15 +41,8 @@ class App:
     ) -> None:
         self._page = _page = page
 
-        self._drawer = drawer = Drawer()
-        self._rail = Rail(RailModel(page, drawer))
-
-        self.sign_in_model = SignInModel(page)
-        self.sign_up_model = SignInModel(page)
-        self.email_code_model = EmailCodeModel(page)
-        self.home_model = EmailCodeModel(page)
-        self.chats_model = ChatsModel(page)
-        self.dialog_model = DialogModel(page)
+        # self._drawer = drawer = Drawer()
+        # self._rail = Rail(RailModel(page, drawer))
 
         page.on_view_pop = self._view_pop_cb
         page.on_route_change = self._route_change_cb
@@ -57,27 +68,17 @@ class App:
         views = self._page.views
         views.clear()
         views.append(
-            IndexView(IndexModel(self._page))
+            IndexView()
         )
 
         if event.route == view_enums.Route.SIGN_IN:
-            views.append(SignInView(self.sign_in_model))
+            views.append(SignInView(sign_in_controller))
         elif event.route == view_enums.Route.SIGN_UP:
-            views.append(SignUpView(self.sign_up_model))
-        elif event.route == view_enums.Route.EMAIL_CODE:
-            views.append(EmailCodeView(self.email_code_model))
+            views.append(SignUpView(sign_up_controller))
         elif event.route == view_enums.Route.HOME:
-            home_view = HomeView(
-                chats_model=self.chats_model,
-                dialog_model=self.dialog_model,
-                home_model=self.home_model,
-                drawer=self._drawer,
-                rail=self._rail
-            )
-            views.append(home_view)
+            views.append(HomeView(home_controller))
 
         self._page.update()
-
 
 
 if __name__ == "__main__":

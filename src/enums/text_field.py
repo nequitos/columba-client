@@ -7,3 +7,5 @@ class Label(StrEnum):
     PASSWORD = "Password"
     EMAIL = "Email"
     CODE = "Code"
+    RE_PWD = "Retype password"
+    USERNAME = "Your name"

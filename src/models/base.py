@@ -1,9 +1,6 @@
 
-from flet import Page
-from src.session import BaseSession
+from pydantic import BaseModel
 
 
-class ModelObject:
-    def __init__(self, page: Page, session: BaseSession) -> None:
-        self._page = page
-        self._session = session
+class Validator(BaseModel):
+    pass

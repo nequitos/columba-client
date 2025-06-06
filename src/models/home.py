@@ -1,10 +1,9 @@
 
-from .base import ModelObject
+from .base import Validator
+from uuid import UUID
 
 
-class HomeModel(ModelObject):
-    async def on_chat(self):
-        pass
-
-    async def add_chat(self):
-        pass
+class HomeModel:
+    uuid: UUID
+    first_name: str
+    last_name: str

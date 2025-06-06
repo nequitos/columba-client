@@ -21,7 +21,7 @@ class OAuth2(Auth):
         self,
         scheme: str,
         host: str,
-        port: str,
+        port: int,
         token_endpoint_uri: str,
         username: str | None = None,
         password: str | None = None,
@@ -65,8 +65,11 @@ class OAuth2(Auth):
             client_secret=client_secret
         )
 
-    async def authorize_account(self) -> bool:
-        access_token = await self.get_access_token()
+    async def authorize_account(self, token: str | None = None) -> bool:
+        if token is None:
+            access_token = await self.get_access_token()
+        else:
+            access_token = token
 
         if access_token:
             self.__token = access_token

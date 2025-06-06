@@ -72,8 +72,20 @@ class BaseSession:
         except RequestError as exc:
             raise
 
-    async def patch(self):
-        pass
+    async def patch(
+        self,
+        path: str,
+        params: JsonDumpsType | None = None
+    ) -> JsonLoadsType:
+        try:
+            logger.debug(f"Send request with data {params}")
+            resp = await self._client.patch(path, params=params)
+            resp.raise_for_status()
+            return resp.json()
+        except HTTPStatusError as exc:
+            raise
+        except RequestError as exc:
+            raise
 
     async def delete(self):
         pass

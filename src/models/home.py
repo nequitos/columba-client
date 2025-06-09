@@ -4,6 +4,6 @@ from uuid import UUID
 
 
 class HomeModel:
+    access_token: str
     uuid: UUID
-    first_name: str
-    last_name: str
+    username: str

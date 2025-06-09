@@ -19,19 +19,26 @@ class SignUpController:
         self.__session = session
         self.__oauth = oauth
 
-    async def on_sign_up(self, scheme: auth_schemes.SignUpRequest) -> bool:
-        response = await self.__session.post("/auth/sign_up", json=scheme.model_dump())
+    async def on_sign_up(self, email: str) -> bool:
+        await self.__session.post("/auth/sign_up", json={"email": email})
+        return True
 
-        print(response)
-        if response:
-            print("YES")
-            self.__model.email = scheme.email
-            return True
-        else:
-            return False
-
-    async def verify_code(self, scheme: auth_schemes.VerifyEmailCodeRequest) -> bool:
-        response = await self.__session.post("/auth/sign_up/verify_code", json=scheme.model_dump())
+    async def verify_code(
+        self,
+        email: str,
+        username: str,
+        code: str,
+        password: str
+    ) -> bool:
+        response = await self.__session.post(
+            "/auth/verify_code", json={
+                "email": email,
+                "username": username,
+                "code": code,
+                "password": password,
+                "scope": "me items"
+            }
+        )
 
         if response:
             access_token = response["access_token"]

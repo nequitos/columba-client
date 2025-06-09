@@ -90,25 +90,80 @@ class HomeView(View):
             self.get_container()
         ]
 
-    def build(self):
-        self.page.run_task(self.__controller.set_me_info)
-
     def did_mount(self):
-        self.page.run_task(self.update_chats)
+        self.page.run_task(self.__controller.set_me_info)
+        self.page.run_task(self.update_chats, page=1, size=10)
 
-    async def update_chats(self):
-        chats = await self.__controller.get_chats()
-        chat_buttons = [
-            ElevatedButton(
-                content=Row(
-                    [CircleAvatar(), Text(f"{chat["first_name"]} {chat["last_name"]}")]
-                ),
-                on_click=self.on_chat,
-                data=chat["uuid"]
+    async def update_chats(self, page: int, size: int):
+        chats = await self.__controller.get_chats(page, size)
+        if chats:
+            chat_buttons = [
+                ElevatedButton(
+                    content=Row(
+                        [CircleAvatar(), Text(value=f"{chat["username"]}")]
+                    ),
+                    on_click=self.on_chat,
+                    data={
+                        "chat_uuid": chat["chat_uuid"],
+                        "recipient_uuid": chat["recipient_uuid"]
+                    }
+                )
+                for chat in chats
+            ]
+            self.chats_column.controls = chat_buttons
+            self.page.update()
+
+
+    def add_message(
+        self,
+        sender_username: str,
+        message_text: str,
+        message_account_uuid: UUID,
+    ):
+        self.__messages_list.controls.append(
+            Row(
+                [
+                    Column(
+                        [
+                            # Text(sender_username),
+                            Text(message_text)
+                        ],
+                        alignment=MainAxisAlignment.END if self.__controller.uuid == message_account_uuid else MainAxisAlignment.START
+                    )
+                ],
+                expand=True
             )
-            for chat in chats
+        )
+
+    def update_dialog_container(
+        self, messages: list[dict[str, Any]],
+        chat_uuid: UUID,
+        recipient_uuid: UUID
+    ):
+        self.dialog_container.clean()
+
+        if self.__messages_list is not None:
+            self.__messages_list.controls.clear()
+
+        column = Column(expand=True)
+
+        self.__messages_list = ListView(expand=True)
+        [
+            self.add_message(
+                sender_username=message["sender_username"],
+                message_text=message["text"],
+                message_account_uuid=message["account_uuid"]
+            )
+            for message in messages
         ]
-        self.chats_column.controls = chat_buttons
+        typesetting_row = self.get_typesetting_row(chat_uuid=chat_uuid)
+
+        column.controls = [
+            self.__messages_list,
+            typesetting_row
+        ]
+
+        self.dialog_container.content = column
         self.page.update()
 
     def get_container(self) -> Container:
@@ -126,7 +181,7 @@ class HomeView(View):
         return container
 
 
-    def get_typesetting_row(self, send_data: Any) -> Row:
+    def get_typesetting_row(self, chat_uuid: UUID) -> Row:
         self.__typesetting_entry = text_field = TextField(expand=True)
 
         clip_btn = IconButton(
@@ -137,8 +192,7 @@ class HomeView(View):
         send_btn = IconButton(
             icon=Icons.SEND_OUTLINED,
             selected_icon=Icons.SEND,
-            on_click=self.on_send,
-            data=send_data
+            on_click=self.on_send
         )
 
         row = Row(
@@ -153,48 +207,25 @@ class HomeView(View):
     async def on_clip(self, event: ControlEvent) -> None:
         pass
 
-    async def on_send(self, event: ControlEvent) -> None:
-        send_response = await self.__controller.send_message(
-            text=self.__typesetting_entry.value,
-            chat_uuid=event.control.data
-        )
-
-        if send_response:
-            self.__messages_list.controls.append(
-                Row([Text(self.__typesetting_entry.value, text_align=TextAlign.END)], expand=True)
-            )
-            self.__typesetting_entry.value = ""
-            await self.update_chats()
-            self.page.update()
-
-
     async def on_manage(self, event: ControlEvent) -> None:
         self.page.open(self.drawer)
 
-    async def on_chat(self, event: ControlEvent) -> None:
-        chat_content = await self.__controller.get_chat(uuid=event.control.data)
-        my_uuid = self.__controller.uuid
+    async def on_send(self, event: ControlEvent) -> None:
+        message = self.__typesetting_entry.value
+        self.__typesetting_entry.clean()
 
-        message_rows = [
-            Row(
-                [
-                    Text(
-                        f"{message["first_name"]}\n {message["text"]}",
-                        text_align=TextAlign.END if my_uuid == message["account_uuid"] else TextAlign.START,
-                        expand=True
-                    )
-                ],
-                expand=True
-            )
-            for message in chat_content["messages"]
-        ]
-
-        column = Column()
-        self.__messages_list = message_list = ListView(controls=message_rows, expand=True)
-        typesetting_row = self.get_typesetting_row(
-            send_data=event.control.data
+        await self.__controller.send_message(message)
+        self.add_message(
+            sender_username=self.__controller.username,
+            message_text=message,
+            message_account_uuid=self.__controller.uuid
         )
-
-        column.controls = [message_list, typesetting_row]
-        self.dialog_container.content = column
         self.page.update()
+
+    async def on_chat(self, event: ControlEvent) -> None:
+        chat_uuid = event.control.data["chat_uuid"]
+        recipient_uuid = event.control.data["recipient_uuid"]
+
+        messages = await self.__controller.get_chat_messages(1, 20, chat_uuid)
+        self.update_dialog_container(messages, chat_uuid, recipient_uuid)
+        await self.__controller.open_chat_ws(chat_uuid, recipient_uuid, self.add_message)

@@ -1,4 +1,7 @@
 
+from sys import path
+path.append(".")
+
 from flet import (
     app_async,
     PagePlatform,
@@ -13,16 +16,15 @@ from src.enums import view as view_enums
 # from src.controllers.drawer import Drawer
 # from src.controllers.rail import Rail
 
-from session import BaseSession, OAuth2
-from src.views.home import HomeView
+from session import BaseSession, OAuth2, BaseWebSocket
 from views import *
 from models import *
 from controllers import *
+from config import HOST, PORT
 
 
-oauth = OAuth2("http", "localhost", 8000, "/oauth/v2/token")
-session = BaseSession("http", "localhost", 8000, oauth)
-
+oauth = OAuth2("http", HOST, PORT, "/auth/token")
+session = BaseSession("http", HOST, PORT, oauth)
 
 # --- Models initialize --- #
 sign_in_model = SignInModel()
@@ -85,8 +87,5 @@ if __name__ == "__main__":
     import asyncio
 
     asyncio.run(
-        app_async(
-            target=App,
-            view=AppView.FLET_APP_WEB
-        )
+        app_async(target=App)
     )

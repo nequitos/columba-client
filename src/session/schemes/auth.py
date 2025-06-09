@@ -10,7 +10,7 @@ class VerifyEmailCodeRequest(Request):
     email: str
     code: str
     password: str
-    first_name: str
+    username: str
 
 
 class AuthRequest(Request):

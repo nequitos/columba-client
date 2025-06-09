@@ -16,7 +16,8 @@ class SingInController:
     async def on_sign_in(self, scheme: auth_schemes.AuthRequest) -> bool:
         self.__oauth.set_credentials(
             username=scheme.username,
-            password=scheme.password
+            password=scheme.password,
+            scopes=["me", "items"]
         )
         response = await self.__oauth.authorize_account()
 

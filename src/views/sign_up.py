@@ -114,8 +114,7 @@ class SignUpView(View):
         return container
 
     async def on_send_code(self, event: ControlEvent):
-        scheme = auth_schemes.SignUpRequest(email=self.email_entry.value)
-        if await self.__controller.on_sign_up(scheme):
+        if await self.__controller.on_sign_up(email=self.email_entry.value):
             container = self.get_second_container()
             self.controls = [container]
             self.page.update()
@@ -124,14 +123,12 @@ class SignUpView(View):
 
     async def on_confirm(self, event: ControlEvent):
         if self.pwd_entry.value == self.re_pwd_entry.value:
-            scheme = auth_schemes.VerifyEmailCodeRequest(
+            if await self.__controller.verify_code(
                 email=self.email_entry.value,
+                username=self.username_entry.value,
                 code=self.code_entry.value,
-                password=self.pwd_entry.value,
-                first_name=self.username_entry.value
-            )
-
-            if await self.__controller.verify_code(scheme):
+                password=self.pwd_entry.value
+            ):
                 self.page.go(view_enums.Route.HOME)
 
 

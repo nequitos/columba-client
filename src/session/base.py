@@ -9,6 +9,7 @@ from httpx import (
     RequestError,
     BasicAuth
 )
+
 from .auth import OAuth2
 
 
@@ -32,6 +33,7 @@ class BaseSession:
         )
         self.headers = self._client.headers
         self.cookies = self._client.cookies
+        self.auth = auth
 
         self.headers["Content-Type"] = "application/json"
 

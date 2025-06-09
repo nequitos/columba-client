@@ -33,10 +33,11 @@ class OAuth2(Auth):
         if grant_type is None:
             grant_type = "password"
 
+        self.scopes = scopes
         self.data = dict(
             username=username,
             password=password,
-            scopes=scopes,
+            scope=' '.join(scopes),
             grant_type=grant_type,
             client_id=client_id,
             client_secret=client_secret
@@ -56,13 +57,15 @@ class OAuth2(Auth):
         username: str,
         password: str,
         client_id: str | None = None,
-        client_secret: str | None = None
+        client_secret: str | None = None,
+        scopes: list[str] = []
     ) -> None:
         self.data.update(
             username=username,
             password=password,
             client_id=client_id,
-            client_secret=client_secret
+            client_secret=client_secret,
+            scope=' '.join(scopes)
         )
 
     async def authorize_account(self, token: str | None = None) -> bool:
